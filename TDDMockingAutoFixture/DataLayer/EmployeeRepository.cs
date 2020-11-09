@@ -7,7 +7,16 @@
     {
         public IEnumerable<Employee> GetAll()
         {
-            throw new System.NotImplementedException();
+            return new List<Employee>()
+            {
+                new Employee
+                {
+                    Id = 1,
+                    FirstName = "Ella",
+                    LastName = "The-Dog",
+                    GrossPay = 2000m
+                }
+            };
         }
     }
 }

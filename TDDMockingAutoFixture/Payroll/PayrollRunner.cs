@@ -44,8 +44,10 @@
 
                     return new PayrollResult
                     {
-                        Errors = errors?.ToDictionary(
+                        Errors = errors != null && errors.Any() 
+                            ? errors.ToDictionary(
                             error => error.EmployeeId, error => $"{error.FailureCode} :{error.FailureReason}")
+                            : null
                     };
                 }
             }
