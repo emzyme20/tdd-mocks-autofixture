@@ -30,7 +30,7 @@
                 payrollRun.Add(new
                 {
                     EmployeeId = employee.Id,
-                    NetPay = employee.GrossPay
+                    NetPay = CalculateNetPay(employee)
                 });
             }
 
@@ -38,7 +38,8 @@
             {
                 if (payrollRun.Any())
                 {
-                    var result = this.externalPayrollProvider.RunPayroll(JsonConvert.SerializeObject(payrollRun));
+                    var payload = JsonConvert.SerializeObject(payrollRun);
+                    var result = this.externalPayrollProvider.RunPayroll(payload);
                     var errors = (List<PayrollProviderResult>)JsonConvert.DeserializeObject(
                         result, typeof(List<PayrollProviderResult>));
 
@@ -59,6 +60,19 @@
             }
 
             return new PayrollResult();
+        }
+
+        private decimal CalculateNetPay(Employee employee)
+        {
+            var netPay = employee.GrossPay;
+
+            foreach (var deduction in employee.Deductions)
+            {
+                var deductionValue = employee.GrossPay * ((decimal)deduction.Percentage / 100);
+                netPay -= deductionValue;
+            }
+
+            return netPay;
         }
     }
 }

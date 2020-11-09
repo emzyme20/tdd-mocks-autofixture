@@ -1,7 +1,11 @@
 ﻿namespace TDDMockingAutoFixture.Models
 {
+    using System.Collections.Generic;
+
     public class Employee
     {
+        public List<Deduction> Deductions { get; set; }
+
         public string FirstName { get; set; }
 
         public decimal GrossPay { get; set; }

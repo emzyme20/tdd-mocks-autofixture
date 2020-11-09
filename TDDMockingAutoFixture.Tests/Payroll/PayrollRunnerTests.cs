@@ -151,6 +151,14 @@ namespace TDDMockingAutoFixture.Tests.Payroll
                 .With(x => x.FirstName, "John")
                 .With(x => x.LastName, "Thorpe")
                 .With(x => x.GrossPay, 2500m)
+                .With(x => x.Deductions, new List<Deduction>
+                {
+                    new Deduction
+                    {
+                        Description = "Pension",
+                        Percentage = 10
+                    }
+                })
                 .Create();
 
             this.fixture
