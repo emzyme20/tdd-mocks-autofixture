@@ -130,5 +130,49 @@ namespace TDDMockingAutoFixture.Tests.Payroll
 
             result.Errors.Should().HaveCount(1);
         }
+
+        [Fact]
+        public void RunPayroll_WithDeductions_WillReduceNetPay()
+        {
+            // Arrange
+            var expectedPayroll = new List<dynamic>
+            {
+                new
+                {
+                    EmployeeId = 1,
+                    NetPay = 2250.0m
+                }
+            };
+            var expectedJson = JsonConvert.SerializeObject(expectedPayroll);
+
+            var employee = this.fixture
+                .Build<Employee>()
+                .With(x => x.Id, 1)
+                .With(x => x.FirstName, "John")
+                .With(x => x.LastName, "Thorpe")
+                .With(x => x.GrossPay, 2500m)
+                .Create();
+
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Setup(x => x.RunPayroll(expectedJson))
+                .Returns(JsonConvert.SerializeObject(new List<PayrollProviderResult>()));
+
+            this.fixture
+                .Create<Mock<IRepository<Employee>>>()
+                .Setup(x => x.GetAll())
+                .Returns(new List<Employee> { employee });
+            
+            // Act
+            var sut = this.fixture.Create<IPayrollRunner>();
+            var result = sut.RunPayroll();
+
+            // Assert
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Verify(x => x.RunPayroll(expectedJson), Times.Once());
+            
+            result.Errors.Should().BeNull();
+        }
     }
 }
