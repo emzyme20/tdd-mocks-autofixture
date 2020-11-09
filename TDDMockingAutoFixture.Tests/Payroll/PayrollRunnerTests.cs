@@ -1,5 +1,6 @@
 namespace TDDMockingAutoFixture.Tests.Payroll
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using AutoFixture;
@@ -67,6 +68,67 @@ namespace TDDMockingAutoFixture.Tests.Payroll
                 .Verify(x => x.RunPayroll(It.IsAny<string>()), Times.Once());
 
             result.Errors.Should().BeNull();
+        }
+
+        [Fact]
+        public void RunPayroll_ExternalPayrollProviderUnknownError_WillThrowException()
+        {
+            // Arrange
+            var employees = this.fixture.CreateMany<Employee>(10);
+
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Setup(x => x.RunPayroll(It.IsAny<string>()))
+                .Throws(new Exception("Insufficient funds to pay employees."));
+
+            this.fixture
+                .Create<Mock<IRepository<Employee>>>()
+                .Setup(x => x.GetAll())
+                .Returns(employees);
+
+            var sut = this.fixture.Create<IPayrollRunner>();
+            
+            // Act
+            Action act = () => sut.RunPayroll();
+
+            // Assert
+            act.Should().Throw<Exception>().WithMessage("Insufficient funds to pay employees.");
+        }
+
+        [Fact]
+        public void RunPayroll_WithEmployees_ExternalProviderReturnsErrors()
+        {
+            // Arrange
+            var employees = this.fixture.CreateMany<Employee>(10);
+
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Setup(x => x.RunPayroll(It.IsAny<string>()))
+                .Returns(JsonConvert.SerializeObject(new List<PayrollProviderResult>
+                {
+                    new PayrollProviderResult
+                    {
+                        EmployeeId = employees.Last().Id,
+                        FailureCode = 4521,
+                        FailureReason = "Bank account not found"
+                    }
+                }));
+
+            this.fixture
+                .Create<Mock<IRepository<Employee>>>()
+                .Setup(x => x.GetAll())
+                .Returns(employees);
+            
+            // Act
+            var sut = this.fixture.Create<IPayrollRunner>();
+            var result = sut.RunPayroll();
+
+            // Assert
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Verify(x => x.RunPayroll(It.IsAny<string>()), Times.Once());
+
+            result.Errors.Should().HaveCount(1);
         }
     }
 }
