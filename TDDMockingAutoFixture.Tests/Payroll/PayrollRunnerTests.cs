@@ -17,6 +17,7 @@ namespace TDDMockingAutoFixture.Tests.Payroll
         public PayrollRunnerTests()
         {
             this.fixture.Freeze<Mock<IRepository<Employee>>>();
+            this.fixture.Freeze<Mock<IExternalPayrollProvider>>();
             this.fixture.Register<IPayrollRunner>(() => this.fixture.Create<PayrollRunner>());
         }
 
@@ -28,13 +29,16 @@ namespace TDDMockingAutoFixture.Tests.Payroll
                 .Create<Mock<IRepository<Employee>>>()
                 .Setup(x => x.GetAll())
                 .Returns(Enumerable.Empty<Employee>());
-
+            
             // Act
             var sut = this.fixture.Create<IPayrollRunner>();
             var result = sut.RunPayroll();
 
             // Assert
-            result.Errors.Should().BeEmpty();
+            result.Errors.Should().BeNull();
+
+            this.fixture.Create<Mock<IExternalPayrollProvider>>()
+                .Verify(x => x.RunPayroll(It.IsAny<string>()), Times.Never());
         }
     }
 }

@@ -4,6 +4,6 @@
 
     public class PayrollResult
     {
-        public IDictionary<int, IEnumerable<string>> Errors { get; set; }
+        public IDictionary<int, string> Errors { get; set; }
     }
 }
