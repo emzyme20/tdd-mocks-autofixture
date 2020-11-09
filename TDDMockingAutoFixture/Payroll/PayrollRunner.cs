@@ -11,5 +11,10 @@
         {
             this.employeeRepository = employeeRepository;
         }
+
+        public PayrollResult RunPayroll()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -3,6 +3,7 @@ namespace TDDMockingAutoFixture.Tests.Payroll
     using System.Linq;
     using AutoFixture;
     using AutoFixture.AutoMoq;
+    using FluentAssertions;
     using Moq;
     using TDDMockingAutoFixture.DataLayer;
     using TDDMockingAutoFixture.Models;
@@ -33,6 +34,7 @@ namespace TDDMockingAutoFixture.Tests.Payroll
             var result = sut.RunPayroll();
 
             // Assert
+            result.Errors.Should().BeEmpty();
         }
     }
 }
