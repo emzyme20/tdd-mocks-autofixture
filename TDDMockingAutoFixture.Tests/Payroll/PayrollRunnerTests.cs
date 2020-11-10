@@ -182,5 +182,83 @@ namespace TDDMockingAutoFixture.Tests.Payroll
             
             result.Errors.Should().BeNull();
         }
+
+        [Fact]
+        public void RunPayroll_WithManyDeductions_WillReduceNetPayAccordingly()
+        {
+            // Arrange
+            var expectedPayroll = new List<dynamic>
+            {
+                new
+                {
+                    EmployeeId = 1,
+                    NetPay = 2250.0m
+                },
+                new
+                {
+                    EmployeeId = 2,
+                    NetPay = 2100.00m
+                }
+            };
+            var expectedJson = JsonConvert.SerializeObject(expectedPayroll);
+
+            var employee = this.fixture
+                .Build<Employee>()
+                .With(x => x.Id, 1)
+                .With(x => x.FirstName, "John")
+                .With(x => x.LastName, "Thorpe")
+                .With(x => x.GrossPay, 2500m)
+                .With(x => x.Deductions, new List<Deduction>
+                {
+                    new Deduction
+                    {
+                        Description = "Pension",
+                        Percentage = 10
+                    }
+                })
+                .Create();
+
+            var employeeWithStudentLoan = this.fixture
+                .Build<Employee>()
+                .With(x => x.Id, 2)
+                .With(x => x.FirstName, "Harry")
+                .With(x => x.LastName, "Gold")
+                .With(x => x.GrossPay, 2500m)
+                .With(x => x.Deductions, new List<Deduction>
+                {
+                    new Deduction
+                    {
+                        Description = "Pension",
+                        Percentage = 10
+                    },
+                    new Deduction
+                    {
+                        Description = "Student Loan",
+                        Percentage = 6
+                    }
+                })
+                .Create();
+
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Setup(x => x.RunPayroll(expectedJson))
+                .Returns(JsonConvert.SerializeObject(new List<PayrollProviderResult>()));
+
+            this.fixture
+                .Create<Mock<IRepository<Employee>>>()
+                .Setup(x => x.GetAll())
+                .Returns(new List<Employee> { employee, employeeWithStudentLoan });
+            
+            // Act
+            var sut = this.fixture.Create<IPayrollRunner>();
+            var result = sut.RunPayroll();
+
+            // Assert
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Verify(x => x.RunPayroll(expectedJson), Times.Once());
+            
+            result.Errors.Should().BeNull();
+        }
     }
 }
