@@ -71,6 +71,35 @@ namespace TDDMockingAutoFixture.Tests.Payroll
         }
 
         [Fact]
+        public void RunPayroll_MultipleTimes_WillResultInDifferentResponsesFromExternalPayrollProvider()
+        {
+            // Arrange
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .SetupSequence(x => x.RunPayroll(It.IsAny<string>()))
+                .Returns(JsonConvert.SerializeObject(new List<PayrollProviderResult>()))
+                .Returns(JsonConvert.SerializeObject(new List<PayrollProviderResult>()))
+                .Throws(new Exception("Something went wrong"));
+
+            this.fixture
+                .Create<Mock<IRepository<Employee>>>()
+                .Setup(x => x.GetAll())
+                .Returns(this.fixture.CreateMany<Employee>(10));
+            
+            // Act
+            var sut = this.fixture.Create<IPayrollRunner>();
+            sut.RunPayroll();
+            sut.RunPayroll();
+            Action act3 = () => sut.RunPayroll();
+
+            // Assert
+            act3.Should().Throw<Exception>();
+            this.fixture
+                .Create<Mock<IExternalPayrollProvider>>()
+                .Verify(x => x.RunPayroll(It.IsAny<string>()), Times.Exactly(3));
+        }
+
+        [Fact]
         public void RunPayroll_ExternalPayrollProviderUnknownError_WillThrowException()
         {
             // Arrange
